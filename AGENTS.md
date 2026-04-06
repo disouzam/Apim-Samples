@@ -45,6 +45,7 @@ This repository provides resources to deploy Azure API Management infrastructure
 ├── setup/                   # Environment setup scripts
 ├── assets/                  # Images and diagrams
 └── .github/                 # CI/CD and Copilot instructions
+    ├── agents/              # Custom agents for focused repository workflows
     ├── copilot-instructions.md
     └── skills/              # Agent skills for specialized tasks
 ```
@@ -69,11 +70,19 @@ Use these skills for specialized tasks. Skills are located in `.github/skills/`.
 | **apim-bicep** | Writing Bicep templates for APIM resources (APIs, backends, policies, products) |
 | **apim-policies** | Creating or modifying APIM XML policies (inbound/outbound, authentication, rate limiting) |
 
+## Available Agents
+
+Use these custom agents for focused repository workflows. Agents are located in `.github/agents/`.
+
+| Agent                   | When to Use                                                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **APIM Sample Creator** | Adding a new sample, gathering missing sample metadata, scaffolding from `_TEMPLATE`, and updating README, website, slide deck, and compatibility artifacts     |
+
 ### How to Use Skills
 
 When a task matches a skill's domain, read the skill file first:
 
-```
+```text
 .github/skills/<skill-name>/SKILL.md
 ```
 
@@ -83,14 +92,28 @@ Skills provide templates, patterns, and step-by-step workflows.
 
 ### Quick Process
 
-1. **Read the skill**: Load `.github/skills/sample-creator/SKILL.md`
-2. **Gather requirements**: Sample name, description, supported infrastructures, learning objectives
-3. **Create folder**: `samples/<sample-name>/`
-4. **Create required files**:
+1. **Prefer the custom agent**: Use `.github/agents/apim-sample-creator.agent.md` for end-to-end sample creation.
+2. **Read the skill**: Load `.github/skills/sample-creator/SKILL.md`
+3. **Gather requirements**: Sample name, description, supported infrastructures, learning objectives
+4. **Create folder**: `samples/<sample-name>/` unless the user explicitly requests another location
+5. **Create required files**:
    - `README.md` - Follow the template structure
    - `create.ipynb` - Jupyter notebook with initialization, deployment, and verification cells
    - `main.bicep` - Reference shared modules from `shared/bicep/modules/`
    - `*.xml` - Policy files (if needed)
+6. **Update repo surfaces**:
+    - Root `README.md` sample table
+    - `docs/index.html` sample cards and JSON-LD list
+    - `assets/APIM-Samples-Slide-Deck.html` when sample inventory or descriptions are shown
+    - `tests/Test-Matrix.md`
+    - Compatibility diagrams when supported infrastructures change visually
+
+### Sample Addition Requirements
+
+- Ask the user for the sample name if it is not provided.
+- Ask the user for supported infrastructures if they are not provided.
+- Keep sample display names consistent across README tables, the website, the slide deck, and compatibility artifacts.
+- If a broadly useful improvement is discovered while creating a sample, suggest updating `samples/_TEMPLATE` so future samples inherit it.
 
 ### Sample Naming Conventions
 

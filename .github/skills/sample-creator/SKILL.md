@@ -1,6 +1,6 @@
 ---
 name: sample-creator
-description: Guide for creating new Azure API Management (APIM) usage samples in this repository. Use when users want to create a new sample folder under `samples/` that demonstrates APIM policies, API configurations, or integration patterns. This skill provides the required folder structure, file templates, naming conventions, and step-by-step guidance based on the `samples/_TEMPLATE` structure.
+description: Guide for creating new Azure API Management (APIM) usage samples in this repository. Use when users want to create a new sample folder under `samples/`, scaffold from `samples/_TEMPLATE`, or update README, website, slide deck, and compatibility listings for a new sample. This skill provides the required folder structure, file templates, naming conventions, and step-by-step guidance based on the `samples/_TEMPLATE` structure.
 ---
 
 # Sample Creator
@@ -23,7 +23,7 @@ samples/<sample-name>/
 
 Before creating the sample, collect:
 
-1. **Sample name** - kebab-case folder name (e.g., `oauth-validation`, `rate-limiting`)
+1. **Sample name** - kebab-case folder name (e.g., `oauth-validation`, `rate-limiting`). If the user has not provided it, ask before creating files.
 2. **Display name** - Human-readable title for README
 3. **Description** - Brief explanation of what the sample demonstrates
 4. **Supported infrastructures** - Which infrastructure architectures work with this sample:
@@ -32,17 +32,21 @@ Before creating the sample, collect:
    - `INFRASTRUCTURE.APPGW_APIM` - Application Gateway + APIM
    - `INFRASTRUCTURE.APPGW_APIM_PE` - Application Gateway + APIM with Private Endpoint
    - `INFRASTRUCTURE.SIMPLE_APIM` - Basic APIM setup
+    - If the user has not provided supported infrastructures, ask before scaffolding the sample.
 5. **Learning objectives** - What users will learn (3-5 bullet points)
 6. **APIs to create** - List of APIs with operations, paths, and policies
 7. **Policy requirements** - Any custom APIM policies needed
+8. **Downstream updates** - Whether the sample requires updates to the website, slide deck, or compatibility artifacts. Default to yes for new samples.
 
 ## Step 2: Create the Sample Folder
 
-Create the folder structure:
+Create the folder structure under `samples/` unless the user explicitly requests another location:
 
 ```bash
 mkdir samples/<sample-name>
 ```
+
+Start from `samples/_TEMPLATE/` and compare the result against at least one similar existing sample before finalizing.
 
 ## Step 3: Create README.md
 
@@ -311,6 +315,22 @@ Load policies in the notebook:
 ```python
 pol_example = utils.read_policy_xml('example-policy.xml', sample_name = sample_folder)
 ```
+
+## Step 7: Update Repository Surfaces
+
+Adding a sample is not complete until the repository listings stay in sync.
+
+Update these files when a new sample is added:
+
+1. `README.md` - Add the sample to the root sample table in alphabetical order.
+2. `docs/index.html` - Add the sample card and the matching JSON-LD `ItemList` entry.
+3. `assets/APIM-Samples-Slide-Deck.html` - Update sample inventory, counts, and sample descriptions where the deck surfaces them.
+4. `tests/Test-Matrix.md` - Add the sample row and mark unsupported infrastructures as `N/A` where appropriate.
+5. Compatibility diagrams and related assets - Update them whenever supported infrastructure changes must be reflected visually.
+
+Keep the canonical display name identical across README tables, the website, the slide deck, and compatibility diagrams.
+
+If the sample work exposes a reusable structural improvement, suggest updating `samples/_TEMPLATE/` as part of the same task or as a follow-up.
 
 ## API and Operation Types
 

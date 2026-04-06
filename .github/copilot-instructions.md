@@ -149,6 +149,19 @@ Each sample in `samples/[sample-name]/` must contain:
 - `*.xml` - APIM policy files (if applicable to the sample)
 - `*.kql` - KQL (Kusto Query Language) files (if applicable to the sample)
 
+### New Sample Sync Checklist
+
+Whenever a new sample is added:
+- Ask for the sample name if it has not been provided. Do not invent it.
+- Ask for supported infrastructures if they have not been provided. Do not assume "All infrastructures".
+- Create the sample under `samples/[sample-name]/` unless the user explicitly requests another location.
+- Use `samples/_TEMPLATE` as the baseline and suggest updating the template if the improvement should apply to future samples.
+- Update the root `README.md` sample table in alphabetical order.
+- Update `docs/index.html`, including the matching sample card and JSON-LD `ItemList` entry.
+- Update `assets/APIM-Samples-Slide-Deck.html` when the sample catalog, counts, or descriptions are surfaced in the deck.
+- Update `tests/Test-Matrix.md` and any compatibility diagrams or related assets that represent supported infrastructures.
+- Keep the canonical sample display name identical across README tables, website cards, slide deck content, and compatibility diagrams.
+
 ### Jupyter Notebook (`create.ipynb`) Structure
 
 Follow this pattern for **all** sample `create.ipynb` files. Consistency here is critical - users should recognise the layout immediately from having used any other sample:
