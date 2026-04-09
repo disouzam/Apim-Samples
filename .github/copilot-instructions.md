@@ -366,6 +366,7 @@ Match the heading emojis, heading levels, and section ordering exactly. If a sec
 
 - Use the `ApimRequests` and `ApimTesting` classes from `apimrequests.py` and `apimtesting.py` for all API testing and traffic generation in notebooks.
 - Do not use the `requests` library directly for calling APIM endpoints.
+- **Favour HTTP connection reuse.** When a notebook makes multiple HTTP calls to the same APIM gateway (e.g. a test matrix), create a single `requests.Session()` early and route all calls through it. This avoids repeated TCP+TLS handshakes, which can add 200-500 ms per request. Configure `session.verify` and `session.headers` once from `utils.get_endpoint()` and pass the session (or use it in helper functions) for OPTIONS, GET, and POST calls alike.
 - Use `utils.get_endpoint(deployment, rg_name, apim_gateway_url)` to determine the correct endpoint URL, headers, and TLS verification flag based on the infrastructure type. `allow_insecure_tls` is returned as `True` only for Application Gateway infrastructures because they use a self-signed certificate; it defaults to `False` everywhere else.
 - Example:
   ```python
@@ -396,6 +397,7 @@ Match the heading emojis, heading levels, and section ordering exactly. If a sec
 - Only use apostrophe (U+0027) and quotes (U+0022), not left or right single or double quotation marks.
 - Do not localize URLs (e.g. no "en-us" in links).
 - Never use emoji variation selectors in Markdown. They are sneaky little things that can cause rendering and Markdown anchor link issues.
+- **Markdown tables must be column-aligned.** Pad cell values with spaces so that every `|` delimiter in a column lines up vertically. Use the separator row (`---`, `:---:`, etc.) to establish column widths and align all subsequent rows to match. This applies to every Markdown file in the repository (READMEs, skills, instructions, etc.).
 
 ## Testing and Edge Cases
 
@@ -484,6 +486,17 @@ Check `docs/README.md` for local preview instructions and styling notes. The pag
   | where RequestCount > threshold
   ```
 - When executing KQL via `az rest` or `az monitor log-analytics query`, write the query body to a temporary JSON file and pass it with `--body @tempfile.json` to avoid shell pipe-character interpretation issues on Windows.
+
+### Admin APIs (`/admin/`) Convention
+
+Samples that require administrative or operational endpoints (cache loading, configuration reloads, health checks, etc.) must place them under an **`/admin/`** API path. This establishes a consistent, recognisable pattern across all APIM Samples.
+
+- **API path**: `{api_prefix}admin` (e.g. `cors-admin`, `lb-admin`). The sample's `api_prefix` keeps admin APIs namespaced per sample.
+- **Subscription required**: Always `True`. Admin APIs must never be publicly accessible without a subscription key.
+- **Production security**: Subscription keys are a baseline gate but are shared secrets, not identity-based auth. Production deployments should layer JWT validation (`validate-azure-ad-token` or `validate-jwt`) on top of subscription keys. See the `authX` and `authX-pro` samples for implementation patterns.
+- **Naming**: Use kebab-case operation paths that describe the action (e.g. `/load-cache`, `/clear-cache`, `/refresh-config`).
+- **Tags**: Include the sample's tags so the admin API is grouped with its sibling APIs in the APIM portal.
+- **Documentation**: The admin API's display name should start with the phase or sample context (e.g. `Phase 3 Admin`) so its purpose is clear in the APIM portal.
 
 ### API Management Policy XML Instructions
 
