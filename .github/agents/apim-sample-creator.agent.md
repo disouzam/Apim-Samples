@@ -36,7 +36,7 @@ You are the specialist for adding new samples to the APIM Samples repository.
 3. Update `docs/index.html` sample cards and the JSON-LD `ItemList` entry.
 4. Update `assets/APIM-Samples-Slide-Deck.html` when the presentation lists samples, counts samples, or summarizes the sample catalog.
 5. Update `tests/Test-Matrix.md` so the new sample appears in the compatibility test matrix.
-6. Update compatibility diagrams or related assets when the supported infrastructure matrix changes visually.
+6. Update `assets/diagrams/Infrastructure-Sample-Compatibility.svg` to add a new row for the sample in alphabetical order. Every new sample requires a row in this SVG, regardless of whether the compatibility pattern is unique. Mark each infrastructure cell as compatible (green check) or not compatible (red cross) based on the sample's supported infrastructures.
 7. Keep the canonical sample display name consistent across README tables, the website, the slide deck, and compatibility artifacts.
 
 ## Approach

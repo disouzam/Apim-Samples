@@ -159,7 +159,7 @@ Whenever a new sample is added:
 - Update the root `README.md` sample table in alphabetical order.
 - Update `docs/index.html`, including the matching sample card and JSON-LD `ItemList` entry.
 - Update `assets/APIM-Samples-Slide-Deck.html` when the sample catalog, counts, or descriptions are surfaced in the deck.
-- Update `tests/Test-Matrix.md` and any compatibility diagrams or related assets that represent supported infrastructures.
+- Update `tests/Test-Matrix.md` and `assets/diagrams/Infrastructure-Sample-Compatibility.svg` (add a new row for the sample in alphabetical order, marking each infrastructure as compatible or not).
 - Keep the canonical sample display name identical across README tables, website cards, slide deck content, and compatibility diagrams.
 
 ### Jupyter Notebook (`create.ipynb`) Structure

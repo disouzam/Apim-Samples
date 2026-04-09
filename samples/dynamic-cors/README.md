@@ -10,7 +10,7 @@ Implement dynamic, per-API CORS origin validation in Azure API Management using 
 
 1. Understand why the built-in APIM `<cors>` policy cannot support fully dynamic origin validation and how to replace it with custom policy fragments.
 1. Build a reusable policy fragment that evaluates the `Origin` header against a per-API allowed-origins mapping, handling both OPTIONS preflight and actual request CORS headers.
-1. Compare three mapping strategies side-by-side: **hard-coded** (Phase 1), **Named Values** (Phase 2), and **cache-backed** (Phase 3), understanding the trade-offs of each.
+1. Compare four mapping strategies side-by-side: **native `<cors>` policy** (Baseline), **hard-coded** (Phase 1), **Named Values** (Phase 2), and **cache-backed** (Phase 3), understanding the trade-offs of each.
 1. Use an admin API (`/admin/load-cache`) to populate the APIM internal cache at runtime, demonstrating the `/admin/` convention for operational endpoints.
 1. Verify CORS behaviour with automated tests covering allowed origins, disallowed origins, missing `Origin` headers, and fail-closed cache behaviour.
 
@@ -39,7 +39,7 @@ This lab deploys all phases **side-by-side** so you can inspect and compare them
 > [!IMPORTANT]
 > **Production security:** The admin API in this sample is protected by a subscription key only. Subscription keys are shared secrets and are not a substitute for identity-based authentication. In production, you should add `validate-azure-ad-token` or `validate-jwt` to the admin API's inbound policy. See the [authX](../authX/) and [authX-pro](../authX-pro/) samples for implementation patterns. The policy XML includes a commented example of where to place the validation.
 
-- **Three APIM policy fragments** demonstrating different origin-mapping strategies:
+- **Three APIM policy fragments** (one per dynamic phase) demonstrating progressively more flexible origin-mapping strategies:
   - `DynamicCorsHardcoded` - origins embedded in a C# `switch` expression.
   - `DynamicCorsNamedValues` - origins read from an APIM Named Value as JSON.
   - `DynamicCorsCached` - origins read from the APIM internal cache. Returns `503` if the cache is not initialized (fail-closed).

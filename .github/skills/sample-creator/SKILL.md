@@ -326,7 +326,7 @@ Update these files when a new sample is added:
 2. `docs/index.html` - Add the sample card and the matching JSON-LD `ItemList` entry.
 3. `assets/APIM-Samples-Slide-Deck.html` - Update sample inventory, counts, and sample descriptions where the deck surfaces them.
 4. `tests/Test-Matrix.md` - Add the sample row and mark unsupported infrastructures as `N/A` where appropriate.
-5. Compatibility diagrams and related assets - Update them whenever supported infrastructure changes must be reflected visually.
+5. `assets/diagrams/Infrastructure-Sample-Compatibility.svg` - Add a new row for the sample in alphabetical order. Every new sample needs a row here, regardless of whether the compatibility pattern is unique. Mark each infrastructure cell as compatible (green check) or not compatible (red cross).
 
 Keep the canonical display name identical across README tables, the website, the slide deck, and compatibility diagrams.
 
