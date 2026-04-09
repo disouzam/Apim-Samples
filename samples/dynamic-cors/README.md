@@ -10,7 +10,7 @@ Implement dynamic, per-API CORS origin validation in Azure API Management using 
 
 1. Understand why the built-in APIM `<cors>` policy cannot support fully dynamic origin validation and how to replace it with custom policy fragments.
 1. Build a reusable policy fragment that evaluates the `Origin` header against a per-API allowed-origins mapping, handling both OPTIONS preflight and actual request CORS headers.
-1. Compare four mapping strategies side-by-side: **native `<cors>` policy** (Baseline), **hard-coded** (Phase 1), **Named Values** (Phase 2), and **cache-backed** (Phase 3), understanding the trade-offs of each.
+1. Compare five mapping strategies side-by-side: **native `<cors>` policy** (Baseline), **hard-coded** (Phase 1), **Named Values** (Phase 2), **cache-backed** (Phase 3), and **per-API cache** (Phase 4), understanding the trade-offs of each.
 1. Use an admin API (`/admin/load-cache`) to populate the APIM internal cache at runtime, demonstrating the `/admin/` convention for operational endpoints.
 1. Verify CORS behaviour with automated tests covering allowed origins, disallowed origins, missing `Origin` headers, and fail-closed cache behaviour.
 
@@ -29,45 +29,50 @@ You need a single, reusable CORS mechanism that can be applied to any API while 
 
 This lab deploys all phases **side-by-side** so you can inspect and compare them without redeployment:
 
-- **Nine APIs** (two per phase plus an admin API) with no backends. Each CORS demo API includes a GET operation returning a JSON response indicating whether CORS was allowed and an OPTIONS operation for preflight handling.
+- **Eleven APIs** (two per phase plus an admin API) with no backends. Each CORS demo API includes a GET operation returning a JSON response indicating whether CORS was allowed and an OPTIONS operation for preflight handling.
   - **Baseline** (`cors-bl-products`, `cors-bl-analytics`) - native APIM `<cors>` policy with static origins.
   - **Phase 1** (`cors-ph1-products`, `cors-ph1-analytics`) - `DynamicCorsHardcoded` policy fragment.
   - **Phase 2** (`cors-ph2-products`, `cors-ph2-analytics`) - `DynamicCorsNamedValues` policy fragment.
-  - **Phase 3** (`cors-ph3-products`, `cors-ph3-analytics`) - `DynamicCorsCached` policy fragment.
+  - **Phase 3** (`cors-ph3-products`, `cors-ph3-analytics`) - `DynamicCorsCached` policy fragment (single cache entry for all APIs).
+  - **Phase 4** (`cors-ph4-products`, `cors-ph4-analytics`) - `DynamicCorsCachedPerApi` policy fragment (per-API cache entries).
   - **Admin** (`cors-admin`) - `POST /load-cache/{cacheKey}` stores a value in the APIM internal cache and `POST /clear-cache/{cacheKey}` removes it (subscription required).
 
 > [!IMPORTANT]
 > **Production security:** The admin API in this sample is protected by a subscription key only. Subscription keys are shared secrets and are not a substitute for identity-based authentication. In production, you should add `validate-azure-ad-token` or `validate-jwt` to the admin API's inbound policy. See the [authX](../authX/) and [authX-pro](../authX-pro/) samples for implementation patterns. The policy XML includes a commented example of where to place the validation.
 
-- **Three APIM policy fragments** (one per dynamic phase) demonstrating progressively more flexible origin-mapping strategies:
+- **Four APIM policy fragments** (one per dynamic phase) demonstrating progressively more flexible origin-mapping strategies:
   - `DynamicCorsHardcoded` - origins embedded in a C# `switch` expression.
   - `DynamicCorsNamedValues` - origins read from an APIM Named Value as JSON.
-  - `DynamicCorsCached` - origins read from the APIM internal cache. Returns `503` if the cache is not initialized (fail-closed).
+  - `DynamicCorsCached` - origins read from the APIM internal cache as a single JSON mapping. Returns `503` if the cache is not initialized (fail-closed).
+  - `DynamicCorsCachedPerApi` - origins read from per-API cache entries (`corsOriginMapping-{apiId}`). Returns `503` if the current API's cache entry is missing (fail-closed).
 - **One Named Value** (`CorsOriginMapping`) holding the JSON origin mapping for Phase 2.
 - An **API-level policy** (`cors-api-policy.xml`) that includes the active CORS fragment in `<inbound>` and documents the outbound pattern for APIs with real backends.
 
 ### Progression
 
-| Phase        | Policy                                    | Mapping location             | Trade-offs                                                                                        |
-| ------------ | ----------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Baseline** | Native `<cors>`                           | Static XML attribute list    | Same origins for all APIs; cannot vary per API                                                    |
-| **Phase 1**  | `DynamicCorsHardcoded` fragment           | Inline `switch/case` in C#   | Per-API control; requires redeploying the fragment to change origins                              |
-| **Phase 2**  | `DynamicCorsNamedValues` fragment         | JSON string in a Named Value | Updateable in the portal; **4,096-char limit** per Named Value                                    |
-| **Phase 3**  | `DynamicCorsCached` fragment + admin API  | APIM internal cache          | No size limit; updated via admin API; fail-closed when cache is empty; can swap to external Redis |
+| Phase        | Policy                                            | Mapping location                     | Trade-offs                                                                                        |
+| ------------ | ------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| **Baseline** | Native `<cors>`                                   | Static XML attribute list            | Same origins for all APIs; cannot vary per API                                                    |
+| **Phase 1**  | `DynamicCorsHardcoded` fragment                   | Inline `switch/case` in C#           | Per-API control; requires redeploying the fragment to change origins                              |
+| **Phase 2**  | `DynamicCorsNamedValues` fragment                 | JSON string in a Named Value         | Updateable in the portal; **4,096-char limit** per Named Value                                    |
+| **Phase 3**  | `DynamicCorsCached` fragment + admin API          | APIM internal cache (single entry)   | No size limit; updated via admin API; fail-closed when cache is empty; can swap to external Redis |
+| **Phase 4**  | `DynamicCorsCachedPerApi` fragment + admin API    | APIM internal cache (per-API entry)  | Per-API cache isolation; smaller cache reads; update one API without touching others              |
 
 ### Comparison Matrix
 
-| Criterion                                   | Baseline | Phase 1 | Phase 2 | Phase 3 |
-| ------------------------------------------- | :------: | :-----: | :-----: | :-----: |
-| Per-API origin control                      |    -     |    +    |    +    |    +    |
-| No fragment redeployment to change origins  |    +     |    -    |    +    |    +    |
-| No size limit on origin mapping             |    +     |    +    |    -    |    +    |
-| Zero additional infrastructure              |    +     |    +    |    +    |    -    |
-| Update origins without Azure portal access  |   n/a    |    -    |    -    |    +    |
-| Fail-closed when mapping is absent          |   n/a    |   n/a   |   n/a   |    +    |
-| Observability (trace logging)               |    -     |    +    |    +    |    +    |
-| Swap to external Redis without code changes |   n/a    |   n/a   |   n/a   |    +    |
-| Complexity                                  |   Low    |   Low   |   Low   |  Medium |
+| Criterion                                   | Baseline | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
+| ------------------------------------------- | :------: | :-----: | :-----: | :-----: | :-----: |
+| Per-API origin control                      |    -     |    +    |    +    |    +    |    +    |
+| No fragment redeployment to change origins  |    +     |    -    |    +    |    +    |    +    |
+| No size limit on origin mapping             |    +     |    +    |    -    |    +    |    +    |
+| Zero additional infrastructure              |    +     |    +    |    +    |    -    |    -    |
+| Update origins without Azure portal access  |   n/a    |    -    |    -    |    +    |    +    |
+| Fail-closed when mapping is absent          |   n/a    |   n/a   |   n/a   |    +    |    +    |
+| Observability (trace logging)               |    -     |    +    |    +    |    +    |    +    |
+| Swap to external Redis without code changes |   n/a    |   n/a   |   n/a   |    +    |    +    |
+| Update single API without full cache reload |   n/a    |   n/a   |   n/a   |    -    |    +    |
+| Smaller per-request cache reads             |   n/a    |   n/a   |   n/a   |    -    |    +    |
+| Complexity                                  |   Low    |   Low   |   Low   |  Medium |  Medium |
 
 **Legend:** `+` = advantage, `-` = limitation, `n/a` = not applicable to this approach.
 
@@ -75,6 +80,7 @@ This lab deploys all phases **side-by-side** so you can inspect and compare them
 - **Phase 1** adds per-API control with zero infrastructure overhead, ideal for a small, stable set of origins.
 - **Phase 2** removes the need to redeploy fragments when origins change, but is constrained by the 4,096-character Named Value limit.
 - **Phase 3** lifts all size limits, enables runtime updates via an admin API, and adopts a fail-closed posture. The trade-off is the additional admin API surface and the requirement to initialise the cache after an APIM restart or scale-out.
+- **Phase 4** builds on Phase 3 by storing each API's origins in a separate cache entry (`corsOriginMapping-{apiId}`). This means each request reads only its own API's origin array (smaller payload), and updating one API's origins does not require reloading the entire mapping. The trade-off is the same as Phase 3 plus the need to load each API's cache entry individually.
 
 ## ⚙️ Configuration
 
