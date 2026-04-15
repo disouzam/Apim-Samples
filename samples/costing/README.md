@@ -25,19 +25,19 @@ Beyond the [general prerequisites](../../README.md#-getting-started) (Azure subs
 
 The signed-in user needs the following role assignments:
 
-| Role | Scope | Purpose |
-|---|---|---|
-| **Contributor** | Resource Group | Deploy Bicep resources (App Insights, Log Analytics, Storage, Workbook, Diagnostic Settings) |
-| **Cost Management Contributor** | Subscription | Create Cost Management export |
-| **Storage Blob Data Contributor** | Storage Account | Write cost export data (auto-assigned by the notebook) |
+| Role                              | Scope           | Purpose                                                                                      |
+| --------------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
+| **Contributor**                   | Resource Group  | Deploy Bicep resources (App Insights, Log Analytics, Storage, Workbook, Diagnostic Settings) |
+| **Cost Management Contributor**   | Subscription    | Create Cost Management export                                                                |
+| **Storage Blob Data Contributor** | Storage Account | Write cost export data (auto-assigned by the notebook)                                       |
 
 ### For Workbook Consumers
 
 Users who only need to **view** the deployed Azure Monitor Workbook (not deploy the sample) need:
 
-| Role | Scope | Purpose |
-|---|---|---|
-| **Monitoring Reader** | Resource Group | Open and view the workbook |
+| Role                     | Scope                   | Purpose                                           |
+| ------------------------ | ----------------------- | ------------------------------------------------- |
+| **Monitoring Reader**    | Resource Group          | Open and view the workbook                        |
 | **Log Analytics Reader** | Log Analytics Workspace | Execute the Kusto queries that power the workbook |
 
 > 💡 If a user can open the workbook but sees empty visualizations, they are likely missing **Log Analytics Reader** on the workspace.
@@ -57,14 +57,14 @@ This sample focuses on **producing cost data**, not implementing billing process
 
 ### Three Tracking Approaches
 
-| Aspect | Subscription-Based | Entra ID Application | AI Gateway Token/PTU |
-|---|---|---|---|
-| **Caller identification** | APIM subscription key (`ApimSubscriptionId`) | JWT `appid`/`azp` claim | JWT `appid`/`azp` claim |
-| **Data source** | `ApiManagementGatewayLogs` in Log Analytics | `customMetrics` in Application Insights | `customMetrics` in Application Insights |
-| **Tracking mechanism** | Built-in APIM logging | `emit-metric` policy | `emit-metric` policy (outbound response parsing) |
-| **Metric name** | N/A (built-in logs) | `caller-requests` | `caller-tokens` |
-| **Cost Management export** | Yes (storage account) | No (metrics-based) | No (metrics-based) |
-| **Best for** | Dedicated subscriptions per BU | OAuth client-credentials flows, shared subscriptions | AI Gateway scenarios (Azure OpenAI, PTU capacity planning) |
+| Aspect                     | Subscription-Based                           | Entra ID Application                                 | AI Gateway Token/PTU                                       |
+| -------------------------- | -------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| **Caller identification**  | APIM subscription key (`ApimSubscriptionId`) | JWT `appid`/`azp` claim                              | JWT `appid`/`azp` claim                                    |
+| **Data source**            | `ApiManagementGatewayLogs` in Log Analytics  | `customMetrics` in Application Insights              | `customMetrics` in Application Insights                    |
+| **Tracking mechanism**     | Built-in APIM logging                        | `emit-metric` policy                                 | `emit-metric` policy (outbound response parsing)           |
+| **Metric name**            | N/A (built-in logs)                          | `caller-requests`                                    | `caller-tokens`                                            |
+| **Cost Management export** | Yes (storage account)                        | No (metrics-based)                                   | No (metrics-based)                                         |
+| **Best for**               | Dedicated subscriptions per BU               | OAuth client-credentials flows, shared subscriptions | AI Gateway scenarios (Azure OpenAI, PTU capacity planning) |
 
 All three approaches are deployed together. Toggle `enable_entraid_tracking` and `enable_token_tracking` in the notebook to include or exclude each flow.
 
@@ -89,29 +89,29 @@ This lab deploys and configures:
 
 ### Cost Allocation Model
 
-| Component | Formula |
-|---|---|
+| Component           | Formula                                              |
+| ------------------- | ---------------------------------------------------- |
 | **Base Cost Share** | `Base Monthly Cost x (BU Requests / Total Requests)` |
-| **Variable Cost** | `BU Requests x (Rate per 1K / 1000)` |
-| **Total Allocated** | `Base Cost Share + Variable Cost` |
+| **Variable Cost**   | `BU Requests x (Rate per 1K / 1000)`                 |
+| **Total Allocated** | `Base Cost Share + Variable Cost`                    |
 
 ### What Gets Logged
 
-| Field | Description |
-|---|---|
+| Field                | Description                                   |
+| -------------------- | --------------------------------------------- |
 | `ApimSubscriptionId` | Identifies the caller (BU / department / app) |
-| `ApiId` | Which API was called |
-| `OperationId` | Specific operation within the API |
-| `ResponseCode` | Success / failure indication |
-| Request count | Number of requests (primary cost metric) |
+| `ApiId`              | Which API was called                          |
+| `OperationId`        | Specific operation within the API             |
+| `ResponseCode`       | Success / failure indication                  |
+| Request count        | Number of requests (primary cost metric)      |
 
 > **Important**: The API must have `subscriptionRequired: true` for `ApimSubscriptionId` to be populated in logs. This sample configures it automatically.
 
 ## ⚙️ Configuration
 
 1. Decide which of the [Infrastructure Architectures][infrastructure-architectures] you wish to use.
-    1. If the infrastructure _does not_ yet exist, navigate to the desired [infrastructure][infrastructure-folder] folder and follow its README.md.
-    1. If the infrastructure _does_ exist, adjust the `user-defined parameters` in the _Initialize notebook variables_ below. Please ensure that all parameters match your infrastructure.
+    1. If the infrastructure *does not* yet exist, navigate to the desired [infrastructure][infrastructure-folder] folder and follow its README.md.
+    1. If the infrastructure *does* exist, adjust the `user-defined parameters` in the *Initialize notebook variables* below. Please ensure that all parameters match your infrastructure.
 2. Run All Cells.
 
 ## 🖼️ Expected Results
@@ -173,6 +173,7 @@ The AI Gateway tab shows per-client token consumption and estimated costs when A
 ## 🧹 Clean Up
 
 To remove all resources created by this sample, open and run `clean-up.ipynb`. This deletes:
+
 - Sample API and subscriptions from APIM
 - Application Insights, Log Analytics, Storage Account
 - Azure Monitor Workbook
@@ -196,4 +197,3 @@ To remove all resources created by this sample, open and run `clean-up.ipynb`. T
 
 [infrastructure-architectures]: ../../README.md#infrastructure-architectures
 [infrastructure-folder]: ../../infrastructure/
-[simple-apim-infra]: ../../infrastructure/simple-apim/
